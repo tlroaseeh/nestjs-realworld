@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid()) @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email     String   @unique
+  username  String  @unique
+  bio       String?
+  image     String?
+  password  String
+  following Follows[]   @relation("followers")
+  followers Follows[]   @relation("Following")
+  articles  Article[]
+  comments  Comment[]
+  favorites Favorite[]
+}
+
+model Follows {
+  follower User @relation("followers", fields: [followerId], references: [id])
+  followerId String
+  following User @relation("Following", fields: [followingId], references: [id])
+  followingId String
+  @@id([followerId, followingId])
+}
+
+model Article {
+  id        String   @id @default(uuid()) @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slug      String   @unique
+  title     String
+  description String
+  body      String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  favorites Favorite[]
+  comments  Comment[]
+  tagList   TagsOnArticles[]
+}
+
+model Tag {
+  id        String   @id @default(uuid()) @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String   @unique
+  articles  TagsOnArticles[]
+}
+
+model TagsOnArticles {
+  tagId     String
+  tag      Tag      @relation(fields: [tagId], references: [id])
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id])
+  @@id([tagId, articleId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  body      String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  article   Article  @relation(fields: [articleId], references: [id])
+  articleId String
+}
+
+model Favorite {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  article   Article  @relation(fields: [articleId], references: [id])
+  articleId String
+  @@id([userId, articleId])
+}
